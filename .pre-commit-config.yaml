@@ -1,4 +1,9 @@
 ---
+exclude: |
+  (?x)^(
+    .venv/
+  )
+
 repos:
   - repo: meta
     hooks:
@@ -6,54 +11,43 @@ repos:
       - id: check-hooks-apply
   # Protect secrets using Gitleaks
   - repo: https://github.com/zricethezav/gitleaks
-    rev: v8.18.2
+    rev: v8.29.1
     hooks:
       - id: gitleaks
-  # Spell check
-  - repo: https://github.com/crate-ci/typos
-    rev: v1.21.0
-    hooks:
-      - id: typos
   # Supported base hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
+        args: [--maxkb=49999]
       - id: check-ast
       - id: check-case-conflict
-      - id: check-yaml
       - id: end-of-file-fixer
       - id: mixed-line-ending
-      - id: requirements-txt-fixer
       - id: trailing-whitespace
-  # YAML linter
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.35.1
-    hooks:
-      - id: yamllint
-        args: [--config-file, .linters/.yaml-lint.yml]
-  # Markdown lint
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.40.0
-    hooks:
-      - id: markdownlint
-        args: [-c, .linters/.markdownlint.yml]
-        types: [file]
-        files: .(md|qmd)$
   # Add trailing commas to calls and literals.
   - repo: https://github.com/asottile/add-trailing-comma
-    rev: v3.1.0
+    rev: v4.0.0
     hooks:
       - id: add-trailing-comma
-  # PEP 8 style guide, error and complexity checks
-  # Replaces Black, Flake8, isort, pydocstyle, pyupgrade, bandit, and autoflake
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
-    rev: v0.4.4
+  # Markdown lint
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.46.0
     hooks:
-      # Run the Ruff linter.
-      - id: ruff
-        args: [--config=.linters/.ruff.toml, --fix, --exit-non-zero-on-fix]
-      # Run the Ruff formatter.
+      - id: markdownlint
+        types: [file]
+        files: .(md)$
+        args: [--disable, MD013]
+  # Spell check
+  - repo: https://github.com/crate-ci/typos
+    rev: v1
+    hooks:
+      - id: typos
+  # Lint & format
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.5
+    hooks:
+      - id: ruff-check
+        args: [--config=pyproject.toml, --exit-non-zero-on-fix]
       - id: ruff-format
-        args: [--config=.linters/.ruff.toml]
+        args: [--config=pyproject.toml]

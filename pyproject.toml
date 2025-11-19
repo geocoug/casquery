@@ -1,0 +1,137 @@
+[project]
+name = "casquery"
+dynamic = ["version"]
+authors = [{ name = "Caleb Grant", email = "grantcaleb22@gmail.com" }]
+description = "Search Chemical Abstracts Service Registry Numbers (CASRNs) from the EPA Substance Registry Services (SRS) database."
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10,<3.14"
+license = "GPL-3.0-or-later"
+dependencies = [
+    "requests>=2.32.5",
+    "rich>=14.2.0",
+    "typer>=0.20.0",
+]
+
+[project.urls]
+Repository = "https://github.com/geocoug/casquery"
+Issues = "https://github.com/geocoug/casquery/issues"
+
+[project.optional-dependencies]
+dev = [
+    "build>=1.3.0",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.5",
+    "tox-uv>=1.29.0",
+    "twine>=6.2.0",
+]
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[project.scripts]
+casquery = "casquery.casquery:app"
+
+[tool.setuptools.dynamic]
+version = { attr = "casquery.casquery.__version__" }
+
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "*cache*",
+]
+line-length = 120
+target-version = "py313"
+respect-gitignore = true
+fix = true
+
+[tool.ruff.lint]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+select = [
+    "E",
+    "F",
+    "Q",
+    "B",
+    "I",
+    "UP",
+    "N",
+    "S",
+    "C4",
+    "T20",
+    "RET",
+    "SIM",
+    "PD",
+    "RUF",
+]
+ignore = ["S101", "B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.bumpversion]
+current_version = "0.2.0"
+commit = true
+commit_args = "--no-verify"
+tag = true
+
+[[tool.bumpversion.files]]
+filename = "src/casquery/casquery.py"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov=casquery",
+    "--cov=tests",
+    "--cov-branch",
+    "--cov-fail-under=75",
+    "--strict-markers",
+    "--strict-config",
+    "--color=yes",
+    "-ra",
+]
+testpaths = ["tests"]
+log_cli = true
+
+[tool.coverage.report]
+exclude_also = ["if __name__ == .__main__.:"]
+omit = ["pipeloom/examples/*"]
+
+[tool.tox]
+required = ["tox-uv"]
+env_list = ["py310", "py311", "py312", "py313", "build"]
+skip_missing_interpreters = true
+isolated_build = true
+basepython = "python3.13"
+
+[tool.tox.env_run_base]
+description = "Run tests under {base_python}"
+deps = ["pytest-cov", "requests", "typer", "rich"]
+commands = [["pytest", "{posargs}"]]
+
+[tool.tox.env.build]
+description = "Build distribution packages"
+deps = ["tox-uv"]
+commands = [["uv", "build"]]

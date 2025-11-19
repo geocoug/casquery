@@ -1,98 +1,92 @@
-# srs-casrn-search
+# casquery
 
-[![ci/cd](https://github.com/geocoug/srs-casrn-search/workflows/ci-cd/badge.svg)](https://github.com/geocoug/srs-casrn-search/actions/workflows/ci-cd.yml)
+[![ci/cd](https://github.com/geocoug/casquery/workflows/ci-cd/badge.svg)](https://github.com/geocoug/casquery/actions/workflows/ci-cd.yml)
 
-Query the [EPA Substance Registry Service](https://cdxapps.epa.gov/oms-substance-registry-services) using a list of [CAS Registry Numbers](https://en.wikipedia.org/wiki/CAS_Registry_Number).
+Query the **EPA Substance Registry Service (SRS)** using **CAS Registry Numbers (CASRN)**.
 
-## Usage
+`casquery` provides:
 
-### Python
+- A command-line tool for searching CASRN records
+- Normalization of messy CAS numbers
+- CAS resolution (superseded → current CASRN)
+- Batch processing of CSVs
+- Multiple output formats (table, JSON, XML, CSV)
 
-```sh
-$ python casrn_search.py --help
+It works both as:
 
-usage: casrn_search.py [-h] [-s] [-f] [-v] cas_rn [cas_rn ...]
+- A **standalone script** (`python casquery.py`)
+- A **PyPI-installable CLI** (`casquery …`)
 
-Search the EPA Substance Registry Service (SRS) for matching substances based on CAS RN and display results as a markdown table in the terminal. Version 0.1.2, 2024-04-02
-
-positional arguments:
-  cas_rn          CAS RN or list of CAS RN to search in the EPA Substance Registry Service (SRS).
-
-options:
-  -h, --help      show this help message and exit
-  -s, --synonyms  Include chemical synonyms.
-  -f, --file      Output results to a CSV file instead of the terminal.
-  -v, --verbose   Control the amount of information to display.
-```
-
-### Docker
-
-#### Building from source
+## Installation
 
 ```sh
-docker build -t casrn_search .
+pip install casquery
 ```
 
-Run the container:
+## Standalone Script Usage
+
+You can also run it directly as a script without installing:
 
 ```sh
-docker run -it --rm casrn_search --help
+python casquery.py --help
 ```
 
-#### Using the pre-built image
+## Command Line Usage
 
 ```sh
-docker pull ghcr.io/geocoug/srs-casrn-search:latest
+# Help
+casquery --help
+casquery search --help
+
+# Search EPA SRS
+casquery search 375-73-5 29420-43-3
+
+# Search with synonyms
+casquery search --synonyms 375-73-5
+
+# Output formats
+casquery search 375-73-5 --format json
+casquery search 375-73-5 --format xml
+casquery search 375-73-5 --format csv
+
+# Normalize CAS numbers
+casquery normalize 1234567
+# → 1234-56-7
+
+# Resolve superseded CAS numbers
+casquery resolve 29420-43-3
+
+# Batch-process a CSV (Input CSV must contain a column of CASRN values.)
+casquery batch input.csv --column analyte_cas --output cleaned.csv
 ```
 
-Optionally tag the image:
+## Examples
+
+Search for two CAS numbers
 
 ```sh
-docker tag ghcr.io/geocoug/srs-casrn-search:latest casrn_search
+casquery search 7440-66-6 7440097
+
+╭───────────────────────────────────────────────╮
+│        EPA SRS CASRN Search Results           │
+╰───────────────────────────────────────────────╯
+cas_rn     systematicName     epaName     currentCasNumber
+---------  ------------------  ----------  -----------------
+7440-66-6  Zinc                Zinc        7440-66-6
+7440-09-7  Potassium           Potassium   7440-09-7
 ```
 
-Run the container:
+Output JSON instead of a table
 
 ```sh
-docker run -it --rm ghcr.io/geocoug/srs-casrn-search:latest --help
+casquery search --format json 375-73-5
+
+[
+  {
+    "cas_rn": "375-73-5",
+    "systematicName": "Perfluorobutane sulfonic acid",
+    "epaName": "PFBS",
+    "currentCasNumber": "375-73-5"
+  }
+]
 ```
-
-### Examples
-
-1. Search for a list of CAS RN and output the results to the terminal:
-
-    ```sh
-    docker run -it --rm casrn_search -v 7440-66-6 7440097
-    ```
-
-    Output:
-
-    ```txt
-    casrn_search.py, 0.1.2, 2024-04-02
-
-    Querying CAS Record Numbers:
-    1/2: 7440-66-6
-    2/2: 7440097
-
-    Results:
-    | cas_rn    | systematicName   | epaName   | currentCasNumber   |
-    |-----------|------------------|-----------|--------------------|
-    | 7440097   | Potassium        | Potassium | 7440-09-7          |
-    | 7440-66-6 | Zinc             | Zinc      | 7440-66-6          |
-    ```
-
-2. Search for a list of CAS RN and output the results to a CSV file:
-
-    > ***Note***: you must mount a directory to the container to save the file locally.
-
-    ```sh
-    docker run -v $(pwd):/app -it --rm casrn_search -v -f 7440-66-6 7440097
-    ```
-
-    Output:
-
-    ```txt
-    cas_rn,systematicName,epaName,currentCasNumber
-    7440097,Potassium,Potassium,7440-09-7
-    7440-66-6,Zinc,Zinc,7440-66-6
-    ```
