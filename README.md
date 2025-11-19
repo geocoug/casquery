@@ -1,6 +1,6 @@
 # casquery
 
-[![ci/cd](https://github.com/geocoug/casquery/workflows/ci-cd/badge.svg)](https://github.com/geocoug/casquery/actions/workflows/ci-cd.yml)
+[![ci/cd](https://github.com/geocoug/casquery/workflows/ci-cd/badge.svg)](https://github.com/geocoug/casquery/actions/workflows/ci-cd.yaml)
 
 Query the **EPA Substance Registry Service (SRS)** using **CAS Registry Numbers (CASRN)**.
 
