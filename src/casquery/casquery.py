@@ -19,7 +19,7 @@ from rich.console import Console
 from rich.progress import track
 from rich.table import Table
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __vdate = "2025-11-19"
 
 BASE_URL = "https://cdxapps.epa.gov/oms-substance-registry-services/rest-api/substance/cas"
