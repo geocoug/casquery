@@ -20,15 +20,10 @@ It works both as:
 ## Installation
 
 ```sh
+# From PyPI
 pip install casquery
-```
-
-## Standalone Script Usage
-
-You can also run it directly as a script without installing:
-
-```sh
-python casquery.py --help
+# Or pip install git+
+pip install "git+https://github.com/geocoug/casquery.git"
 ```
 
 ## Command Line Usage
@@ -79,14 +74,20 @@ cas_rn     systematicName     epaName     currentCasNumber
 Output JSON instead of a table
 
 ```sh
-casquery search --format json 375-73-5
+casquery search --format json 7440-66-6 7440-09-7
 
 [
   {
-    "cas_rn": "375-73-5",
-    "systematicName": "Perfluorobutane sulfonic acid",
-    "epaName": "PFBS",
-    "currentCasNumber": "375-73-5"
+    "cas_rn": "7440-09-7",
+    "systematicName": "Potassium",
+    "epaName": "Potassium",
+    "currentCasNumber": "7440-09-7"
+  },
+  {
+    "cas_rn": "7440-66-6",
+    "systematicName": "Zinc",
+    "epaName": "Zinc",
+    "currentCasNumber": "7440-66-6"
   }
 ]
 ```

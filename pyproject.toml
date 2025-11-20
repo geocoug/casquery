@@ -4,7 +4,7 @@ dynamic = ["version"]
 authors = [{ name = "Caleb Grant", email = "grantcaleb22@gmail.com" }]
 description = "Search Chemical Abstracts Service Registry Numbers (CASRNs) from the EPA Substance Registry Services (SRS) database."
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10,<=3.14"
 license = "GPL-3.0-or-later"
 dependencies = [
     "requests>=2.32.5",
@@ -121,7 +121,7 @@ omit = ["pipeloom/examples/*"]
 
 [tool.tox]
 required = ["tox-uv"]
-env_list = ["py310", "py311", "py312", "py313", "build"]
+env_list = ["py310", "py311", "py312", "py313", "py314", "build"]
 skip_missing_interpreters = true
 isolated_build = true
 basepython = "python3.13"
