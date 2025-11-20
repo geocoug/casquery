@@ -18,11 +18,12 @@ runner = CliRunner()
 
 @pytest.fixture(autouse=True)
 def no_progress(monkeypatch):
-    """Disable rich.progress.track in tests to avoid noisy output."""
+    """Disable rich.progress.track in tests to avoid noisy output and flakiness."""
 
     def _track(iterable, **kwargs):
         return iterable
 
+    # casquery.track is the imported symbol from rich.progress
     monkeypatch.setattr(casquery, "track", _track)
     yield
 
@@ -89,7 +90,7 @@ def test_casrn_search_basic(monkeypatch) -> None:
 
     monkeypatch.setattr(casquery, "send_request", fake_send_request)
 
-    rows = casquery.casrn_search(["29420-43-3", "375-73-5"], synonyms=False, verbose=False)
+    rows = casquery.casrn_search(["29420-43-3", "375-73-5"], synonyms=False)
 
     # Should return 2 rows
     assert len(rows) == 2
@@ -98,7 +99,6 @@ def test_casrn_search_basic(monkeypatch) -> None:
     cas_list = [r["cas_rn"] for r in rows]
     assert cas_list == ["29420-43-3", "375-73-5"]
 
-    # Check fields
     pfbs_potassium = rows[0]
     pfbs_acid = rows[1]
 
@@ -127,7 +127,7 @@ def test_casrn_search_synonyms(monkeypatch) -> None:
 
     monkeypatch.setattr(casquery, "send_request", fake_send_request)
 
-    rows = casquery.casrn_search(["375-73-5"], synonyms=True, verbose=False)
+    rows = casquery.casrn_search(["375-73-5"], synonyms=True)
     assert len(rows) == 1
     row = rows[0]
     assert row["synonyms"] == "PFBS;Perfluorobutane sulfonate"
@@ -151,7 +151,11 @@ def test_batch_adds_metadata(monkeypatch, tmp_path: Path) -> None:
 
     output_csv = tmp_path / "output.csv"
 
-    def fake_casrn_search(cas_rn_list: list[str], synonyms: bool = False, verbose: bool = False):
+    def fake_casrn_search(
+        cas_rn_list: list[str],
+        synonyms: bool = False,
+        output_format: casquery.OutputFormat = casquery.OutputFormat.TABLE,
+    ):
         # cas_rn_list will contain normalized CAS numbers
         out = []
         for cas in cas_rn_list:
@@ -184,7 +188,6 @@ def test_batch_adds_metadata(monkeypatch, tmp_path: Path) -> None:
         input_csv=input_csv,
         column="cas_rn",
         output_csv=output_csv,
-        verbose=False,
     )
 
     # Read the output and verify
@@ -233,7 +236,11 @@ def test_cli_version() -> None:
 def test_cli_search_json(monkeypatch) -> None:
     """search subcommand with JSON output should print valid JSON."""
 
-    def fake_casrn_search(cas_rn_list, synonyms=False, verbose=False):
+    def fake_casrn_search(
+        cas_rn_list,
+        synonyms: bool = False,
+        output_format: casquery.OutputFormat = casquery.OutputFormat.TABLE,
+    ):
         return [
             {
                 "cas_rn": "375-73-5",
@@ -247,10 +254,11 @@ def test_cli_search_json(monkeypatch) -> None:
 
     result = runner.invoke(
         casquery.app,
-        ["search", "375-73-5", "--format", "json"],
+        ["search", "--format", "json", "375-73-5"],
     )
     assert result.exit_code == 0
 
+    # JSON output should be pure JSON (no progress bar / headers)
     data = json.loads(result.stdout)
     assert isinstance(data, list)
     assert data[0]["cas_rn"] == "375-73-5"
@@ -259,7 +267,11 @@ def test_cli_search_json(monkeypatch) -> None:
 def test_cli_search_table(monkeypatch) -> None:
     """search subcommand with table output should succeed and show CAS in output."""
 
-    def fake_casrn_search(cas_rn_list, synonyms=False, verbose=False):
+    def fake_casrn_search(
+        cas_rn_list,
+        synonyms: bool = False,
+        output_format: casquery.OutputFormat = casquery.OutputFormat.TABLE,
+    ):
         return [
             {
                 "cas_rn": "375-73-5",
@@ -289,7 +301,11 @@ def test_cli_normalize_command() -> None:
 def test_cli_resolve(monkeypatch) -> None:
     """resolve should print message mapping given CAS to current CAS."""
 
-    def fake_casrn_search(cas_rn_list, synonyms=False, verbose=False):
+    def fake_casrn_search(
+        cas_rn_list,
+        synonyms: bool = False,
+        output_format: casquery.OutputFormat = casquery.OutputFormat.TABLE,
+    ):
         return [
             {
                 "cas_rn": "29420-43-3",
