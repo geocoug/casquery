@@ -31,6 +31,13 @@ app = typer.Typer(add_completion=False, help="CAS RN utility for EPA SRS.")
 # ---------- Core helpers ----------
 
 
+class OutputFormat(str, Enum):
+    TABLE = "table"
+    JSON = "json"
+    XML = "xml"
+    CSV = "csv"
+
+
 def normalize_cas(cas: str) -> str | None:
     """Normalize a CAS RN to the form 'XXXXXX-YY-Z'.
 
@@ -72,12 +79,9 @@ def send_request(url: str) -> list[dict] | None:
 def casrn_search(
     cas_rn_list: list[str],
     synonyms: bool = False,
-    verbose: bool = False,
+    output_format: OutputFormat = OutputFormat.TABLE,
 ) -> list[dict[str, Any]]:
     """Query EPA SRS for a list of CAS RN and return results as a list of dicts."""
-
-    if verbose:
-        console.print(f"[green]Querying {len(cas_rn_list)} CAS RN...[/green]")
 
     header = ["cas_rn", "systematicName", "epaName", "currentCasNumber"]
     if synonyms:
@@ -85,7 +89,11 @@ def casrn_search(
 
     rows: list[dict[str, Any]] = []
 
-    for cas_rn in track(cas_rn_list, description="Querying EPA SRS"):
+    use_progress = output_format == OutputFormat.TABLE
+
+    iter_cas = track(cas_rn_list, description="Querying EPA SRS") if use_progress else cas_rn_list
+
+    for cas_rn in iter_cas:
         cleaned_norm = normalize_cas(cas_rn)
         cleaned = cleaned_norm if cleaned_norm else re.sub(r"[^a-zA-Z0-9-]", "", cas_rn)
 
@@ -225,13 +233,6 @@ def app_callback(
 # ---------- Commands ----------
 
 
-class OutputFormat(str, Enum):
-    TABLE = "table"
-    JSON = "json"
-    XML = "xml"
-    CSV = "csv"
-
-
 @app.command()
 def search(
     cas_rn: list[str] = typer.Argument(
@@ -257,24 +258,13 @@ def search(
         "-f",
         help="Write results to casquery.csv instead of printing to stdout.",
     ),
-    verbose: bool = typer.Option(
-        False,
-        "--verbose",
-        "-v",
-        help="Enable additional console output.",
-    ),
 ) -> None:
     """Search the EPA Substance Registry Service (SRS) by CAS RN."""
-
-    if output_format == OutputFormat.TABLE or verbose:
-        console.print(
-            f"[bold cyan]CASRN Search Tool[/bold cyan] v{__version__} ({__vdate})\n",
-        )
 
     rows = casrn_search(
         cas_rn_list=cas_rn,
         synonyms=synonyms,
-        verbose=verbose,
+        output_format=output_format,
     )
 
     if file:
@@ -328,12 +318,6 @@ def resolve(
         ...,
         help="CAS RN to resolve to the current CAS according to EPA SRS.",
     ),
-    verbose: bool = typer.Option(
-        False,
-        "--verbose",
-        "-v",
-        help="Enable additional console output.",
-    ),
 ) -> None:
     """Resolve a CAS RN to its currentCasNumber using EPA SRS."""
     norm = normalize_cas(cas_rn)
@@ -341,7 +325,7 @@ def resolve(
         console.print("[red]Input CAS RN is not structurally valid.[/red]")
         raise typer.Exit(1)
 
-    rows = casrn_search([norm], synonyms=False, verbose=verbose)
+    rows = casrn_search([norm], synonyms=False, output_format=OutputFormat.TABLE)
     if not rows or rows[0].get("currentCasNumber") is None:
         console.print("[yellow]No resolution information found for this CAS RN.[/yellow]")
         raise typer.Exit(0)
@@ -374,12 +358,6 @@ def batch(
         "-o",
         help="Output CSV file path.",
     ),
-    verbose: bool = typer.Option(
-        False,
-        "--verbose",
-        "-v",
-        help="Enable additional console output.",
-    ),
 ) -> None:
     """Batch-process a CSV of CAS RN: normalize, resolve, and attach EPA SRS metadata."""
 
@@ -409,7 +387,7 @@ def batch(
     result_map: dict[str, dict[str, Any]] = {}
     if unique_norms:
         cas_list = sorted(unique_norms)
-        resolution_rows = casrn_search(cas_list, synonyms=False, verbose=verbose)
+        resolution_rows = casrn_search(cas_list, synonyms=False, output_format=OutputFormat.TABLE)
         for r in resolution_rows:
             key = r.get("cas_rn")
             if key:
