@@ -1,7 +1,9 @@
----
+fail_fast: false
+
 exclude: |
   (?x)^(
     .venv/
+    .tox/
   )
 
 repos:
@@ -14,7 +16,12 @@ repos:
     rev: v8.29.1
     hooks:
       - id: gitleaks
-  # Supported base hooks
+  # uv lockfile management
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.9.13
+    hooks:
+      - id: uv-lock
+  # Base hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -30,6 +37,14 @@ repos:
     rev: v4.0.0
     hooks:
       - id: add-trailing-comma
+  # Opinionated markdown formatting
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 1.0.0
+    hooks:
+      - id: mdformat
+        language: python
+        additional_dependencies:
+          - mdformat-mkdocs==5.1.1
   # Markdown lint
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.46.0
@@ -43,7 +58,7 @@ repos:
     rev: v1
     hooks:
       - id: typos
-  # Lint & format
+  # Lint & format with ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.5
     hooks:
@@ -51,3 +66,8 @@ repos:
         args: [--config=pyproject.toml, --exit-non-zero-on-fix]
       - id: ruff-format
         args: [--config=pyproject.toml]
+  # Validate pyproject.toml
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.24.1
+    hooks:
+      - id: validate-pyproject
